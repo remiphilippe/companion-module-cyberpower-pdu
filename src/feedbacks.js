@@ -41,10 +41,18 @@ module.exports = {
 					color: combineRgb(0, 0, 0)
 				},
 				callback: (feedback) => {
+					// Only active for PDU devices
+					if (self.config.deviceType === 'ats') return false
+					
 					let socketNum = feedback.options.socketNum;
 					let targetState = feedback.options.state;
-					let currentStatus;
 					
+					// Validate socket number
+					if (socketNum < 1 || socketNum > 8) {
+						return false
+					}
+					
+					let currentStatus;
 					switch (socketNum) {
                         case 1: currentStatus = self.DATA.s1Status; break;
                         case 2: currentStatus = self.DATA.s2Status; break;
@@ -55,8 +63,7 @@ module.exports = {
                         case 7: currentStatus = self.DATA.s7Status; break;
                         case 8: currentStatus = self.DATA.s8Status; break;
                         default:
-                            self.log('warn', 'Invalid socket number: ' + socketNum);
-                            return false; // Or handle the error as needed
+                            return false;
                     }
 					let statusMatches = (currentStatus === 'On' && targetState === 'on') || (currentStatus === 'Off' && targetState === 'off');					
 					return statusMatches;
