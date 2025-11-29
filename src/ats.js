@@ -27,7 +27,8 @@ module.exports = {
                         totalOutletsOid,
                 ]
 
-                let ident_session = snmp.createSession(host, communityRead)
+                const sessionOptions = { version: snmp.Version2c }
+                let ident_session = snmp.createSession(host, communityRead, sessionOptions)
                 ident_session.get(identOids, function(error, varbinds) {
                         if (error) {
                                 self.log('error', error.toString())
@@ -75,7 +76,7 @@ module.exports = {
                                 outletNameOids.push(outletNameBase + i)
                         }
 
-                        let names_session = snmp.createSession(host, communityRead)
+                        let names_session = snmp.createSession(host, communityRead, sessionOptions)
                         names_session.get(outletNameOids, function(err2, vb2) {
                                 if (err2) {
                                         self.log('error', err2.toString())
@@ -121,50 +122,25 @@ module.exports = {
                                 if (dataChanged) {
                                         self.checkVariables()
                                 }
-                        })
-                })
-                return
 
-                get_session.get(oids, function (error, varbinds) {
-                        if (error) {
-                                self.log('error', error.toString())
-                                self.updateStatus(InstanceStatus.Error)
-                        } else {
-                                for (let i = 0; i < varbinds.length; i++) {
-                                        if (snmp.isVarbindError(varbinds[i])) {
-                                                console.error(snmp.varbindError(varbinds[i]))
-                                        } else {
-                                                if (typeof varbinds[i].value === 'object' && varbinds[i].value !== null) {
-                                                        ats_info.push(ab2str(varbinds[i].value))
+                                // Query local control enable state (atsOutletDevLocalCtrl) to help debugging
+                                const localCtrlOid = '1.3.6.1.4.1.3808.1.1.5.6.1.5.0'
+                                let lc_session = snmp.createSession(host, communityRead, sessionOptions)
+                                lc_session.get([localCtrlOid], function(err3, vb3) {
+                                        if (!err3 && vb3 && vb3[0] && !snmp.isVarbindError(vb3[0])) {
+                                                const val = vb3[0].value
+                                                if (val === 2) {
+                                                        self.log('warn', 'ATS outlet local control is DISABLED (enable via UI or set OID to 1)')
+                                                } else if (val === 1) {
+                                                        self.log('info', 'ATS outlet local control is enabled')
                                                 } else {
-                                                        ats_info.push(varbinds[i].value)
+                                                        self.log('warn', 'ATS outlet local control unexpected value: ' + val)
                                                 }
+                                                self.DATA.atsLocalControl = val
                                         }
-                                }
-                        }
-
-                        get_session.close()
-
-                        const dataKeys = [
-                                'atsModel', 'atsSerialNumber', 'atsFirmware', 'atsDeviceRatingCurrent'
-                        ]
-                        for (let i = 1; i <= MAX_ATS_OUTLETS; i++) {
-                                dataKeys.push(`atsOutlet${i}Name`)
-                        }
-
-                        let dataChanged = false
-
-                        for (let i = 0; i < dataKeys.length; i++) {
-                                const key = dataKeys[i]
-                                if (self.DATA[key] !== ats_info[i]) {
-                                        self.DATA[key] = ats_info[i]
-                                        dataChanged = true
-                                }
-                        }
-
-                        if (dataChanged) {
-                                self.checkVariables()
-                        }
+                                        lc_session.close()
+                                })
+                        })
                 })
                 return
         },
@@ -174,7 +150,8 @@ module.exports = {
                 let ats_status = []
                 let nToWords = ['unknown', 'On', 'Off']
 
-                let get_session = snmp.createSession(host, communityRead)
+                const statusSessionOptions = { version: snmp.Version2c }
+                let get_session = snmp.createSession(host, communityRead, statusSessionOptions)
 
                 const total = self.DATA.atsTotalOutlets ? Math.min(self.DATA.atsTotalOutlets, MAX_ATS_OUTLETS) : 8
                 const activeSourceOid = '1.3.6.1.4.1.3808.1.1.5.2.1.1.0'
@@ -267,7 +244,10 @@ module.exports = {
                         return
                 }
 
+                // Force v2c for write operations
+                snmp_options.version = snmp.Version2c
                 let snmp_session = snmp.createSession(self.config.host, self.config.communityWrite, snmp_options)
+                self.log('info', `Sending ATS source command ${command} via OID 1.3.6.1.4.1.3808.1.1.5.4.1.0 value ${varbinds[0].value}`)
                 snmp_session.set(varbinds, function (error, varbinds) {
                         if (error) {
                                 self.log('warn', error.toString())
@@ -310,6 +290,12 @@ module.exports = {
                 // Values: 2 = immediateOn, 3 = immediateOff, 4 = immediateReboot
 
                 if (control === 'individual') {
+                        // Validate outlet against discovered count
+                        const total = self.DATA.atsTotalOutlets || MAX_ATS_OUTLETS
+                        if (outputValue < 1 || outputValue > total) {
+                                self.log('warn', `Refusing command: outlet ${outputValue} outside 1-${total}`)
+                                return
+                        }
                         varbinds = [{
                                 oid: '1.3.6.1.4.1.3808.1.1.5.6.5.1.3.' + outputValue,
                                 type: snmp.ObjectType.Integer,
@@ -318,7 +304,8 @@ module.exports = {
                 } else if (control === 'all') {
                         // For "all" outlets, send commands to each supported outlet
                         varbinds = []
-                        for (let i = 1; i <= MAX_ATS_OUTLETS; i++) {
+                        const total = self.DATA.atsTotalOutlets || MAX_ATS_OUTLETS
+                        for (let i = 1; i <= total; i++) {
                                 varbinds.push({
                                         oid: '1.3.6.1.4.1.3808.1.1.5.6.5.1.3.' + i,
                                         type: snmp.ObjectType.Integer,
@@ -332,7 +319,17 @@ module.exports = {
                         return
                 }
 
+                // Force v2c for write operations
+                snmp_options.version = snmp.Version2c
                 let snmp_session = snmp.createSession(self.config.host, self.config.communityWrite, snmp_options)
+                if (Array.isArray(varbinds)) {
+                        varbinds.forEach(vb => self.log('info', `ATS outlet cmd -> ${vb.oid} = ${vb.value}`))
+                }
+
+                // Warn if local control disabled
+                if (self.DATA.atsLocalControl === 2) {
+                        self.log('warn', 'Local control disabled; outlet commands may be ignored.')
+                }
                 snmp_session.set(varbinds, function (error, varbinds) {
                         if (error) {
                                 self.log('warn', error.toString())
