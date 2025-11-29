@@ -27,7 +27,7 @@ module.exports = {
                         totalOutletsOid,
                 ]
 
-                const sessionOptions = { version: snmp.Version2c }
+                const sessionOptions = { version: snmp.Version2c, timeout: 5000, retries: 1 }
                 let ident_session = snmp.createSession(host, communityRead, sessionOptions)
                 ident_session.get(identOids, function(error, varbinds) {
                         if (error) {
@@ -150,7 +150,7 @@ module.exports = {
                 let ats_status = []
                 let nToWords = ['unknown', 'On', 'Off']
 
-                const statusSessionOptions = { version: snmp.Version2c }
+                const statusSessionOptions = { version: snmp.Version2c, timeout: 5000, retries: 1 }
                 let get_session = snmp.createSession(host, communityRead, statusSessionOptions)
 
                 const total = self.DATA.atsTotalOutlets ? Math.min(self.DATA.atsTotalOutlets, MAX_ATS_OUTLETS) : 8
@@ -218,6 +218,8 @@ module.exports = {
                         version: snmp.Version1,
                         backwardsGetNexts: true,
                         idBitsSize: 32,
+                        timeout: 5000,
+                        retries: 1,
                 }
 
                 let varbinds
@@ -280,6 +282,8 @@ module.exports = {
                         version: snmp.Version1,
                         backwardsGetNexts: true,
                         idBitsSize: 32,
+                        timeout: 5000,
+                        retries: 1,
                 }
 
                 let varbinds
