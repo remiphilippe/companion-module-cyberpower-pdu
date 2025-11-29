@@ -29,7 +29,8 @@ module.exports = {
                             self.log('warn', `ATS outlet ${options.socketOn} out of range 1-${total}`)
                             return
                         }
-                        self.sendATSOutletCommand('individual', options.socketOn, 1)
+                        self.log('info', `Turn ON outlet ${options.socketOn}`)
+                        self.sendATSOutletCommand('individual', options.socketOn, 2)
                     } else {
                         self.sendCommand('individual', options.socketOn, 1);
                     }
@@ -57,7 +58,8 @@ module.exports = {
                             self.log('warn', `ATS outlet ${options.socketOff} out of range 1-${total}`)
                             return
                         }
-                        self.sendATSOutletCommand('individual', options.socketOff, 2)
+                        self.log('info', `Turn OFF outlet ${options.socketOff}`)
+                        self.sendATSOutletCommand('individual', options.socketOff, 3)
                     } else {
                         self.sendCommand('individual', options.socketOff, 2);
                     }
@@ -87,7 +89,9 @@ module.exports = {
                         }
                         const statusKey = `atsOutlet${options.socketToggle}Status`
                         const current = self.DATA[statusKey]
-                        const nextVal = current === 'On' ? 2 : 1
+                        // ATS values: 2=immediateOn, 3=immediateOff
+                        const nextVal = current === 'On' ? 3 : 2
+                        self.log('info', `Toggle outlet ${options.socketToggle}: current=${current} -> cmd=${nextVal}`)
                         self.sendATSOutletCommand('individual', options.socketToggle, nextVal)
                     } else {
                         self.sendCommand('toggle', options.socketToggle, 5); //5 is dummy
@@ -100,9 +104,7 @@ module.exports = {
 			options: [],
 			callback: async function(event) {
 				if (self.config.deviceType === 'ats') {
-					self.sendATSOutletCommand('all', null, 1)
-				} else {
-					self.sendCommand('all', null, 2);
+				self.sendATSOutletCommand('all', null, 2)
 				}
 			}
 		};
@@ -112,9 +114,7 @@ module.exports = {
 			options: [],
 			callback: async function(event) {
 				if (self.config.deviceType === 'ats') {
-					self.sendATSOutletCommand('all', null, 2)
-				} else {
-					self.sendCommand('all', null, 3);
+				self.sendATSOutletCommand('all', null, 3)
 				}
 			}
 		};
