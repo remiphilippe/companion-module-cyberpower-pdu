@@ -7,7 +7,7 @@ module.exports = {
 	
 	initFeedbacks: function () {
 		let self = this;
-		let build = function(maxOutlets) {
+		let build = function() {
 			let feedbacks = {
 			SocketState: {
 				name: 'Socket State',
@@ -102,7 +102,7 @@ module.exports = {
 						label: 'Outlet Number',
 						default: 1,
 						min: 1,
-						max: maxOutlets || 8,
+						max: 19,  // Always use max possible, validate in callback
 					},
 					{
 						id: 'state',
@@ -122,6 +122,12 @@ module.exports = {
 				callback: (fb) => {
 					if (self.config.deviceType !== 'ats') return false
 					const n = fb.options.outletNum
+					// Validate against discovered count
+					const maxCount = self.DATA.atsTotalOutlets || 8
+					if (n < 1 || n > maxCount) {
+						// Outlet number outside discovered range
+						return false
+					}
 					const statusKey = `atsOutlet${n}Status`
 					const current = self.DATA[statusKey]
 					if (!current) return false
@@ -133,11 +139,11 @@ module.exports = {
 		}
 
 		self.rebuildATSFeedbacks = function(count) {
-			const c = count && count > 0 ? Math.min(count,19) : 8
-			this.setFeedbackDefinitions(build(c))
+			// Count parameter no longer needed - max is always 19 in definition
+			this.setFeedbackDefinitions(build())
 		}
 
-		// initial build assuming unknown count
-		self.rebuildATSFeedbacks(self.DATA.atsTotalOutlets || 8)
+		// initial build
+		self.rebuildATSFeedbacks()
 	}
 }

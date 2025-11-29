@@ -30,6 +30,7 @@ module.exports = {
 			vars.push({ variableId: 'ATS_SerialNumber', name: 'ATS Serial Number' })
 			vars.push({ variableId: 'ATS_Firmware', name: 'ATS Firmware Version' })
 			vars.push({ variableId: 'ATS_Device_Rating_Current', name: 'ATS Device Rating Current (A)' })
+			vars.push({ variableId: 'ATS_Total_Outlets', name: 'ATS Total Outlets' })
 			vars.push({ variableId: 'ATS_Active_Source', name: 'ATS Active Source' })
 			vars.push({ variableId: 'ATS_SourceA_Volts', name: 'ATS Source A Volts (V)' })
 			vars.push({ variableId: 'ATS_SourceB_Volts', name: 'ATS Source B Volts (V)' })
@@ -117,6 +118,7 @@ module.exports = {
 			variableObj['ATS_SerialNumber'] = self.DATA.atsSerialNumber;
 			variableObj['ATS_Firmware'] = self.DATA.atsFirmware;
 			variableObj['ATS_Device_Rating_Current'] = self.DATA.atsDeviceRatingCurrent;
+			variableObj['ATS_Total_Outlets'] = self.DATA.atsTotalOutlets;
 			variableObj['ATS_Active_Source'] = self.DATA.atsActiveSource;
 			variableObj['ATS_SourceA_Volts'] = self.DATA.atsSourceAVolts;
 			variableObj['ATS_SourceB_Volts'] = self.DATA.atsSourceBVolts;
