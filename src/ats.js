@@ -163,8 +163,13 @@ module.exports = {
 
                 get_session.get(oids, function (error, varbinds) {
                         if (error) {
-                                self.log('error', error.toString())
-                                self.updateStatus(InstanceStatus.Error)
+                                // Log but don't fail on timeout - device may be processing a command
+                                if (error.name === 'RequestTimedOutError') {
+                                        // Silently ignore - normal during outlet switching
+                                } else {
+                                        self.log('error', error.toString())
+                                        self.updateStatus(InstanceStatus.Error)
+                                }
                         } else {
                                 for (let i = 0; i < varbinds.length; i++) {
                                         if (snmp.isVarbindError(varbinds[i])) {
@@ -263,14 +268,14 @@ module.exports = {
                         snmp_session.close()
                 })
 
-                // Check status after command
+                // Check status after command (increased delays as device may be busy)
                 setTimeout(function() {
                         self.getATSStatus(self.config.host, self.config.communityRead)
-                }, 500)
+                }, 1000)
 
                 setTimeout(function() {
                         self.getATSStatus(self.config.host, self.config.communityRead)
-                }, 1500)
+                }, 3000)
         },
 
         sendATSOutletCommand: function(control, outputValue, cmdValue) {
@@ -347,13 +352,13 @@ module.exports = {
                         snmp_session.close()
                 })
 
-                // Check status after command
+                // Check status after command (increased delays as device may be busy)
                 setTimeout(function() {
                         self.getATSStatus(self.config.host, self.config.communityRead)
-                }, 500)
+                }, 1000)
 
                 setTimeout(function() {
                         self.getATSStatus(self.config.host, self.config.communityRead)
-                }, 1500)
+                }, 3000)
         }
 }
