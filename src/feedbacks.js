@@ -7,7 +7,8 @@ module.exports = {
 	
 	initFeedbacks: function () {
 		let self = this;
-		let feedbacks = {
+		let build = function(maxOutlets) {
+			let feedbacks = {
 			SocketState: {
 				name: 'Socket State',
 				type: 'boolean',
@@ -101,7 +102,7 @@ module.exports = {
 						label: 'Outlet Number',
 						default: 1,
 						min: 1,
-						max: 8,
+						max: maxOutlets || 8,
 					},
 					{
 						id: 'state',
@@ -127,8 +128,16 @@ module.exports = {
 					return (current === 'On' && fb.options.state === 'on') || (current === 'Off' && fb.options.state === 'off')
 				}
 			}
-		};
+			};
+			return feedbacks
+		}
 
-		this.setFeedbackDefinitions(feedbacks);
+		self.rebuildATSFeedbacks = function(count) {
+			const c = count && count > 0 ? Math.min(count,19) : 8
+			this.setFeedbackDefinitions(build(c))
+		}
+
+		// initial build assuming unknown count
+		self.rebuildATSFeedbacks(self.DATA.atsTotalOutlets || 8)
 	}
 }

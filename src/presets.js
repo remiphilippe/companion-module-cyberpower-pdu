@@ -3,6 +3,41 @@ const { combineRgb } = require('@companion-module/base')
 module.exports = {
 	initPresets: function () {
 		let self = this;
+		let buildATSPresets = function(count) {
+			let p = []
+			const total = count && count > 0 ? Math.min(count,19) : 8
+			for (let i = 1; i <= total; i++) {
+				p.push({
+					type: 'button',
+					category: 'ATS Outlet On',
+					name: 'ATS Outlet ' + String(i) + ' On',
+					style: { bgcolor: 0, text: 'ATS ' + String(i) + ' ON', size: '14', color: 16777215 },
+					steps: [{ down: [{ actionId: 'switchOn', options: { socketOn: String(i) } }], up: [] }],
+					feedbacks: []
+				})
+				p.push({
+					type: 'button',
+					category: 'ATS Outlet Off',
+					name: 'ATS Outlet ' + String(i) + ' Off',
+					style: { bgcolor: 0, text: 'ATS ' + String(i) + ' OFF', size: '14', color: 16777215 },
+					steps: [{ down: [{ actionId: 'switchOff', options: { socketOff: String(i) } }], up: [] }],
+					feedbacks: []
+				})
+				p.push({
+					type: 'button',
+					category: 'ATS Outlet Toggle',
+					name: 'ATS Outlet ' + String(i) + ' Toggle',
+					style: { bgcolor: 0, text: 'ATS ' + String(i) + ' TOGGLE', size: '14', color: 16777215, latch: true },
+					steps: [
+						{ down: [{ actionId: 'switchOn', options: { socketOn: String(i) } }], up: [] },
+						{ down: [{ actionId: 'switchOff', options: { socketOff: String(i) } }], up: [] }
+					],
+					feedbacks: []
+				})
+			}
+			return p
+		}
+
 		let presets = [];
 
 		const foregroundColor = combineRgb(255, 255, 255) // White
@@ -110,6 +145,17 @@ module.exports = {
 			})
 		}
 	
+		// Add ATS presets (using discovered count if available)
+		const atsTotal = self.DATA.atsTotalOutlets || 8
+		presets = presets.concat(buildATSPresets(atsTotal))
+
+		self.rebuildATSPresets = function(count) {
+			// rebuild only ATS-related presets
+			const other = presets.filter(pr => !/^ATS Outlet /.test(pr.name))
+			const ats = buildATSPresets(count)
+			this.setPresetDefinitions(other.concat(ats))
+		}
+
 		this.setPresetDefinitions(presets);
 	}
 }

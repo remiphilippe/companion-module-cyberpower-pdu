@@ -4,50 +4,46 @@ module.exports = {
 	// ##########################
 	initVariables: function () {
 		let self = this;
-		let variables = [];
 
-		variables.push({ variableId: 'Model', name: 'Cyberpower product code' });
-		variables.push({ variableId: 'SerialNumber', name: 'Serial number' });
-		variables.push({ variableId: 'Firmware', name: 'Firmware version' });
-		variables.push({ variableId: 'NumberSockets', name: 'Number of output sockets' });
-		variables.push({ variableId: 'Socket_1_Name', name: 'Socket 1 Name' });
-		variables.push({ variableId: 'Socket_2_Name', name: 'Socket 2 Name' });
-		variables.push({ variableId: 'Socket_3_Name', name: 'Socket 3 Name' });
-		variables.push({ variableId: 'Socket_4_Name', name: 'Socket 4 Name' });
-		variables.push({ variableId: 'Socket_5_Name', name: 'Socket 5 Name' });
-		variables.push({ variableId: 'Socket_6_Name', name: 'Socket 6 Name' });
-		variables.push({ variableId: 'Socket_7_Name', name: 'Socket 7 Name' });
-		variables.push({ variableId: 'Socket_8_Name', name: 'Socket 8 Name' });
-		variables.push({ variableId: 'Socket_1_Status', name: 'Socket 1 Status' });
-		variables.push({ variableId: 'Socket_2_Status', name: 'Socket 2 Status' });
-		variables.push({ variableId: 'Socket_3_Status', name: 'Socket 3 Status' });
-		variables.push({ variableId: 'Socket_4_Status', name: 'Socket 4 Status' });
-		variables.push({ variableId: 'Socket_5_Status', name: 'Socket 5 Status' });
-		variables.push({ variableId: 'Socket_6_Status', name: 'Socket 6 Status' });
-		variables.push({ variableId: 'Socket_7_Status', name: 'Socket 7 Status' });
-		variables.push({ variableId: 'Socket_8_Status', name: 'Socket 8 Status' });
-		variables.push({ variableId: 'Bank_Amps', name: 'Bank Amps' });
-		variables.push({ variableId: 'Bank_Volts', name: 'Bank Volts' });
-		variables.push({ variableId: 'Bank_Watts', name: 'Bank Watts' });
+		// default assumed ATS outlets until discovery
+		if (!self.DATA.atsTotalOutlets) self.DATA.atsTotalOutlets = 8
+		self.rebuildATSVariables = function(count) {
+			// Rebuild full variable list including ATS outlets up to count (capped at 19)
+			const max = Math.min(count || self.DATA.atsTotalOutlets || 8, 19)
+			let vars = []
+			vars.push({ variableId: 'Model', name: 'Cyberpower product code' })
+			vars.push({ variableId: 'SerialNumber', name: 'Serial number' })
+			vars.push({ variableId: 'Firmware', name: 'Firmware version' })
+			vars.push({ variableId: 'NumberSockets', name: 'Number of output sockets' })
+			for (let i = 1; i <= 8; i++) { // existing PDU sockets remain fixed here
+				vars.push({ variableId: `Socket_${i}_Name`, name: `Socket ${i} Name` })
+			}
+			for (let i = 1; i <= 8; i++) {
+				vars.push({ variableId: `Socket_${i}_Status`, name: `Socket ${i} Status` })
+			}
+			vars.push({ variableId: 'Bank_Amps', name: 'Bank Amps' })
+			vars.push({ variableId: 'Bank_Volts', name: 'Bank Volts' })
+			vars.push({ variableId: 'Bank_Watts', name: 'Bank Watts' })
 
-
-		// ATS variables (only meaningful when deviceType === 'ats')
-		variables.push({ variableId: 'ATS_Model', name: 'ATS Model' });
-		variables.push({ variableId: 'ATS_SerialNumber', name: 'ATS Serial Number' });
-		variables.push({ variableId: 'ATS_Firmware', name: 'ATS Firmware Version' });
-		variables.push({ variableId: 'ATS_Device_Rating_Current', name: 'ATS Device Rating Current (A)' });
-		variables.push({ variableId: 'ATS_Active_Source', name: 'ATS Active Source' });
-		variables.push({ variableId: 'ATS_SourceA_Volts', name: 'ATS Source A Volts (V)' });
-		variables.push({ variableId: 'ATS_SourceB_Volts', name: 'ATS Source B Volts (V)' });
-		variables.push({ variableId: 'ATS_SourceA_Freq', name: 'ATS Source A Frequency (Hz)' });
-		variables.push({ variableId: 'ATS_SourceB_Freq', name: 'ATS Source B Frequency (Hz)' });
-		// ATS outlet names & statuses (placeholders, confirm actual count)
-		for (let i = 1; i <= 8; i++) {
-			variables.push({ variableId: `ATS_Outlet_${i}_Name`, name: `ATS Outlet ${i} Name` });
-			variables.push({ variableId: `ATS_Outlet_${i}_Status`, name: `ATS Outlet ${i} Status` });
+			// ATS variables
+			vars.push({ variableId: 'ATS_Model', name: 'ATS Model' })
+			vars.push({ variableId: 'ATS_SerialNumber', name: 'ATS Serial Number' })
+			vars.push({ variableId: 'ATS_Firmware', name: 'ATS Firmware Version' })
+			vars.push({ variableId: 'ATS_Device_Rating_Current', name: 'ATS Device Rating Current (A)' })
+			vars.push({ variableId: 'ATS_Active_Source', name: 'ATS Active Source' })
+			vars.push({ variableId: 'ATS_SourceA_Volts', name: 'ATS Source A Volts (V)' })
+			vars.push({ variableId: 'ATS_SourceB_Volts', name: 'ATS Source B Volts (V)' })
+			vars.push({ variableId: 'ATS_SourceA_Freq', name: 'ATS Source A Frequency (Hz)' })
+			vars.push({ variableId: 'ATS_SourceB_Freq', name: 'ATS Source B Frequency (Hz)' })
+			for (let i = 1; i <= max; i++) {
+				vars.push({ variableId: `ATS_Outlet_${i}_Name`, name: `ATS Outlet ${i} Name` })
+				vars.push({ variableId: `ATS_Outlet_${i}_Status`, name: `ATS Outlet ${i} Status` })
+			}
+			self.setVariableDefinitions(vars)
 		}
 
-		self.setVariableDefinitions(variables)
+		// initial build
+		self.rebuildATSVariables(self.DATA.atsTotalOutlets)
 		 
 		//Check info (names, model, etc) once every 5 seconds
 		try {
@@ -126,9 +122,10 @@ module.exports = {
 			variableObj['ATS_SourceB_Volts'] = self.DATA.atsSourceBVolts;
 			variableObj['ATS_SourceA_Freq'] = self.DATA.atsSourceAFreq;
 			variableObj['ATS_SourceB_Freq'] = self.DATA.atsSourceBFreq;
-			for (let i = 1; i <= 8; i++) {
-				variableObj[`ATS_Outlet_${i}_Name`] = self.DATA[`atsOutlet${i}Name`];
-				variableObj[`ATS_Outlet_${i}_Status`] = self.DATA[`atsOutlet${i}Status`];
+			const total = self.DATA.atsTotalOutlets ? Math.min(self.DATA.atsTotalOutlets, 19) : 8
+			for (let i = 1; i <= total; i++) {
+				variableObj[`ATS_Outlet_${i}_Name`] = self.DATA[`atsOutlet${i}Name`]
+				variableObj[`ATS_Outlet_${i}_Status`] = self.DATA[`atsOutlet${i}Status`]
 			}
 
 			self.setVariableValues(variableObj);
