@@ -34,6 +34,17 @@ module.exports = {
 					return current || ''
 				},
 			},
+			ATSActiveSourceValue: {
+				name: 'ATS Active Source (Value)',
+				type: 'value',
+				label: 'ATS Active Source (Value)',
+				description: 'Returns the current active source for the ATS (e.g., Source A/B)',
+				options: [],
+				callback: () => {
+					if (self.config.deviceType !== 'ats') return ''
+					return self.DATA.atsActiveSource || ''
+				},
+			},
 			SocketState: {
 				name: 'Socket State',
 				type: 'boolean',
@@ -162,9 +173,6 @@ module.exports = {
 					}
 					const statusKey = `atsOutlet${n}Status`
 					const current = self.DATA[statusKey]
-					if (n === 9) {
-						self.log('info', `Outlet 9 feedback: current="${current}" (type=${typeof current}), target="${fb.options.state}"`)
-					}
 					if (!current) return false
 					return (current === 'On' && fb.options.state === 'on') || (current === 'Off' && fb.options.state === 'off')
 				}

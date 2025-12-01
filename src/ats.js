@@ -206,13 +206,10 @@ module.exports = {
 
                         // Outlet statuses (1 = On, 2 = Off) iterate discovered range
                         // ats_status[0] = active source, ats_status[1..N] = outlet 1..N statuses
-                        self.log('info', `ATS status array length: ${ats_status.length}, expecting ${total + 1} values`)
                         for (let i = 1; i <= total; i++) {
                                 const key = `atsOutlet${i}Status`
                                 const statusValue = ats_status[i]
                                 const newValue = nToWords[statusValue] || 'unknown'
-                                // Always log outlet 9 for debugging
-                                self.log('info', `Outlet ${i}: raw=${statusValue} mapped="${newValue}"`)
                                 if (self.DATA[key] !== newValue) {
                                         self.DATA[key] = newValue
                                         dataChanged = true
@@ -221,7 +218,7 @@ module.exports = {
 
                         if (dataChanged) {
                                 self.checkVariables()
-                                self.checkFeedbacks('ATSActiveSource', 'ATSOutletState', 'ATSOutletStatusValue')
+                                self.checkFeedbacks('ATSActiveSource', 'ATSOutletState', 'ATSOutletStatusValue', 'ATSActiveSourceValue')
                         }
                 })
                 return
