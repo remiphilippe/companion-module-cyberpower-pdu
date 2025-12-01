@@ -137,6 +137,9 @@ module.exports = {
 					}
 					const statusKey = `atsOutlet${n}Status`
 					const current = self.DATA[statusKey]
+					if (n === 9) {
+						self.log('info', `Outlet 9 feedback: current="${current}" (type=${typeof current}), target="${fb.options.state}"`)
+					}
 					if (!current) return false
 					return (current === 'On' && fb.options.state === 'on') || (current === 'Off' && fb.options.state === 'off')
 				}
