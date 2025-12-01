@@ -211,7 +211,7 @@ module.exports = {
                                 const key = `atsOutlet${i}Status`
                                 const statusValue = ats_status[i]
                                 const newValue = nToWords[statusValue] || 'unknown'
-                                if (i <= 3 || statusValue !== 1) { // Log first 3 or any non-On outlets
+                                if (i <= 3 || i === 9 || statusValue !== 1) { // Log first 3, outlet 9, or any non-On outlets
                                         self.log('info', `Outlet ${i}: raw=${statusValue} mapped="${newValue}"`)
                                 }
                                 if (self.DATA[key] !== newValue) {
