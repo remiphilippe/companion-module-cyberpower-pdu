@@ -21,7 +21,7 @@ module.exports = {
 						label: 'Socket Number',
 						default: 1,
 						min: 1,
-						max: 8,
+						max: 24,  // Support up to 24 sockets, validate in callback
 						description: 'Socket to monitor',
 					},
 					{
