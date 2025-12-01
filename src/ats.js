@@ -221,7 +221,7 @@ module.exports = {
 
                         if (dataChanged) {
                                 self.checkVariables()
-                                self.checkFeedbacks('ATSActiveSource', 'ATSOutletState')
+                                self.checkFeedbacks('ATSActiveSource', 'ATSOutletState', 'ATSOutletStatusValue')
                         }
                 })
                 return

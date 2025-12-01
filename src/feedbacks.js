@@ -9,6 +9,31 @@ module.exports = {
 		let self = this;
 		let build = function() {
 			let feedbacks = {
+			ATSOutletStatusValue: {
+				name: 'ATS Outlet Status (Value)',
+				type: 'value',
+				label: 'ATS Outlet Status (Value)',
+				description: 'Returns On/Off for a selected ATS outlet',
+				options: [
+					{
+						id: 'outletNum',
+						type: 'number',
+						label: 'Outlet Number',
+						default: 1,
+						min: 1,
+						max: 19,
+					},
+				],
+				callback: (fb) => {
+					if (self.config.deviceType !== 'ats') return ''
+					const n = fb.options.outletNum
+					const maxCount = self.DATA.atsTotalOutlets || 8
+					if (n < 1 || n > maxCount) return ''
+					const statusKey = `atsOutlet${n}Status`
+					const current = self.DATA[statusKey]
+					return current || ''
+				},
+			},
 			SocketState: {
 				name: 'Socket State',
 				type: 'boolean',
