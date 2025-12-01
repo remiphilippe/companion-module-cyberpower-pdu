@@ -197,9 +197,12 @@ module.exports = {
                         }
 
                         // Outlet statuses (1 = On, 2 = Off) iterate discovered range
+                        // ats_status[0] = active source, ats_status[1..N] = outlet 1..N statuses
                         for (let i = 1; i <= total; i++) {
                                 const key = `atsOutlet${i}Status`
-                                const newValue = nToWords[ats_status[i]]
+                                const statusValue = ats_status[i]
+                                const newValue = nToWords[statusValue] || 'unknown'
+                                self.log('debug', `Outlet ${i}: raw=${statusValue} mapped=${newValue}`)
                                 if (self.DATA[key] !== newValue) {
                                         self.DATA[key] = newValue
                                         dataChanged = true
