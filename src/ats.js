@@ -170,16 +170,24 @@ module.exports = {
                                         self.log('error', error.toString())
                                         self.updateStatus(InstanceStatus.Error)
                                 }
-                        } else {
-                                for (let i = 0; i < varbinds.length; i++) {
-                                        if (snmp.isVarbindError(varbinds[i])) {
-                                                console.error(snmp.varbindError(varbinds[i]))
+                                get_session.close()
+                                return
+                        }
+                        
+                        if (!varbinds || varbinds.length === 0) {
+                                self.log('warn', 'ATS status query returned no varbinds')
+                                get_session.close()
+                                return
+                        }
+
+                        for (let i = 0; i < varbinds.length; i++) {
+                                if (snmp.isVarbindError(varbinds[i])) {
+                                        self.log('error', 'Varbind error: ' + snmp.varbindError(varbinds[i]))
+                                } else {
+                                        if (typeof varbinds[i].value === 'object' && varbinds[i].value !== null) {
+                                                ats_status.push(ab2str(varbinds[i].value))
                                         } else {
-                                                if (typeof varbinds[i].value === 'object' && varbinds[i].value !== null) {
-                                                        ats_status.push(ab2str(varbinds[i].value))
-                                                } else {
-                                                        ats_status.push(varbinds[i].value)
-                                                }
+                                                ats_status.push(varbinds[i].value)
                                         }
                                 }
                         }
@@ -198,11 +206,14 @@ module.exports = {
 
                         // Outlet statuses (1 = On, 2 = Off) iterate discovered range
                         // ats_status[0] = active source, ats_status[1..N] = outlet 1..N statuses
+                        self.log('info', `ATS status array length: ${ats_status.length}, expecting ${total + 1} values`)
                         for (let i = 1; i <= total; i++) {
                                 const key = `atsOutlet${i}Status`
                                 const statusValue = ats_status[i]
                                 const newValue = nToWords[statusValue] || 'unknown'
-                                self.log('debug', `Outlet ${i}: raw=${statusValue} mapped=${newValue}`)
+                                if (i <= 3 || statusValue !== 1) { // Log first 3 or any non-On outlets
+                                        self.log('info', `Outlet ${i}: raw=${statusValue} mapped="${newValue}"`)
+                                }
                                 if (self.DATA[key] !== newValue) {
                                         self.DATA[key] = newValue
                                         dataChanged = true
